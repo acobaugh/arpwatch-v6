@@ -1,0 +1,5 @@
+This is the original attempt to rewrite arpwatch in C before I decided to do it
+in Perl first to work out all the details. This should compile and run, and it
+will spit out ARP and NDP packets, which could easily be scraped into a database
+if desired. I'm not sure that the packet filter/classification is correct, but there
+you have it.
