@@ -1,0 +1,13 @@
+arpwatch-v6
+
+A rewrite of arpwatch with support for NDP.
+
+Other goals:
+- allow monitoring multiple networks across multiple interfaces,
+- arbitrary network definitions by exposing the pcap filter expressions
+- a rework of the flat file database format (hostnames change over time, so don't store them)
+- databases other than the .dat flat file
+- external callouts for various events to allow runtime customization
+
+Initial implementation and proof of concept will be in Perl using Net::Pcap. Final product
+should use C wherever possible.
