@@ -5,3 +5,5 @@ Makefile
 arpwatch-v6
 CMakeFiles
 cmake_install.cmake
+*.o
+*.a
