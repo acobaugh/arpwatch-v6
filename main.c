@@ -7,7 +7,7 @@
 
 int main(int argc, char *argv[]) {
 	int c;
-	char *config_file;
+	char *config_file = NULL;
 	int debug = 0;
 
 	/* read in command line options */
@@ -25,6 +25,11 @@ int main(int argc, char *argv[]) {
 				usage();
 				break;
 		}
+	}
+
+	if (!read_config(config_file)) {
+		printf(stderr, "Failed to read config file\n");
+		die();
 	}
 
 	char dev[] = "eth0";
