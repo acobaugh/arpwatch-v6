@@ -14,4 +14,4 @@ add_library(Config config.c)
 add_library(Utils utils.c)
 add_library(Capture capture.c)
 
-target_link_libraries(arpwatch-v6 Config Utils Capture ${optionalLibs})
+target_link_libraries(arpwatch-v6 Config Utils Capture confuse ${optionalLibs})
