@@ -12,10 +12,9 @@ network_config_t networks[];
 extern int num_networks;
 
 int main(int argc, char *argv[]) {
-	int c, i, j;
+	int c, i, j, len;
 	char *config_file = NULL;
 	char *base_filter = "(icmp6 or arp) and ";
-	char *dev;
 
 	/* read in command line options */
 	while ((c = getopt(argc, argv, "c:d")) != -1) {
@@ -44,8 +43,9 @@ int main(int argc, char *argv[]) {
 	if (opt_debug) printf("Number of networks to monitor: %i\n", num_networks);
 	for (i = 0; i < num_networks; i++) {
 		/* build the filter based on the provided filter and base_filter */
-		char *filter_expr = malloc(strlen(networks[i].filter) + strlen(base_filter) + 2);
-		sprintf(filter_expr, "%s(%s)", base_filter, networks[i].filter);
+		len = strlen(networks[i].filter) + strlen(base_filter) + 2;
+		char *filter_expr = malloc(len + 1);
+		snprintf(filter_expr, len + 1, "%s(%s)", base_filter, networks[i].filter);
 		
 		if (opt_debug) {
 			printf("Network: %s (%i)\n", networks[i].name, i);
@@ -56,8 +56,7 @@ int main(int argc, char *argv[]) {
 				printf("\t\t%s\n", networks[i].databases[j]);
 			}
 		}
-		dev = networks[i].device;
-		capture(dev, filter_expr);
+		capture(networks[i].device, filter_expr);
 	}
 
 	return 0;
