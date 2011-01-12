@@ -145,13 +145,13 @@ void callback(u_char *args, const struct pcap_pkthdr *hdr, const u_char *packet)
 	} /* END ARP */
 }
 
-void capture(char dev[], char filter_expr[]) {
-	char errbuf[PCAP_ERRBUF_SIZE];
+void capture(char *dev, char *filter_expr) {
+	char errbuf[PCAP_ERRBUF_SIZE] = "";
 	struct bpf_program fp;
 	bpf_u_int32 mask;
 	bpf_u_int32 net;
 
-	pcap_t *handle;
+	pcap_t *handle = NULL;
 	u_char *args = NULL;
 
 	if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1) {
