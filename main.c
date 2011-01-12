@@ -15,6 +15,7 @@ int main(int argc, char *argv[]) {
 	int c, i, j;
 	char *config_file = NULL;
 	char *base_filter = "(icmp6 or arp) and ";
+	char *dev;
 
 	/* read in command line options */
 	while ((c = getopt(argc, argv, "c:d")) != -1) {
@@ -55,7 +56,8 @@ int main(int argc, char *argv[]) {
 				printf("\t\t%s\n", networks[i].databases[j]);
 			}
 		}
-		capture(&networks[i].device, filter_expr);
+		dev = networks[i].device;
+		capture(dev, filter_expr);
 	}
 
 	return 0;
