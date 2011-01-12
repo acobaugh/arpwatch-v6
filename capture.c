@@ -22,6 +22,8 @@
 
 #include "utils.h"
 
+extern int opt_debug;
+
 /* callback() gets called on every packet by pcap_loop() */
 void callback(u_char *args, const struct pcap_pkthdr *hdr, const u_char *packet) {
 	/* ethernet packet header */
@@ -32,7 +34,6 @@ void callback(u_char *args, const struct pcap_pkthdr *hdr, const u_char *packet)
 	/* ipv6 */
 	struct ip6_hdr *ip6_hdr_p;
 	struct icmp6_hdr *icmp6_hdr_p;
-	struct ip6_ext *ip6_ext_hdr_p;
 	int is_icmp6 = 0;
 	struct ip6_ext *ip6_ext_hdr_ptr;
 
@@ -149,33 +150,38 @@ void capture(char dev[], char filter_expr[]) {
 	struct bpf_program fp;
 	bpf_u_int32 mask;
 	bpf_u_int32 net;
-	
+
 	pcap_t *handle;
 	u_char *args = NULL;
 
-	printf("Device: %s\n", dev);
-	
 	if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1) {
 		fprintf(stderr, "Couldn't get netmask for device %s: %s\n", dev, errbuf);
 		net = 0;
 		mask = 0;
+	} else if (opt_debug) {
+		printf("pcap_lookupnet(): net = %d mask = %d\n", net, mask);
 	}
-
 
 	handle = pcap_open_live(dev, BUFSIZ, 1, 1000, errbuf);
 	if (handle == NULL) {
 		fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
 		die();
+	} else if (opt_debug) {
+		printf("pcap_open_live(): success\n");
 	}
 
 	if (pcap_compile(handle, &fp, filter_expr, 0, net) == -1) {
 		fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_expr, pcap_geterr(handle));
 		die();
+	} else if (opt_debug) {
+		printf("pcap_compile(): success\n");
 	}
 
 	if (pcap_setfilter(handle, &fp) == -1) {
 		fprintf(stderr, "Couldn't install filter %s: %s\n", filter_expr, pcap_geterr(handle));
 		die();
+	} else if (opt_debug) {
+		printf("pcap_setfilter(): success\n");
 	}
 
 	pcap_loop(handle, 0, callback, args);
