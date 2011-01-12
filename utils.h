@@ -1,3 +1,6 @@
+#ifndef UTILS_H
+#define UTILS_H 1
+
 #include <netinet/ether.h>
 #include <net/ethernet.h>
 
@@ -22,3 +25,5 @@ void ipv6_ntoa(char *, struct in6_addr);
 void print_ipv6hdr(struct ip6_hdr);
 
 void print_ipv4hdr(struct ether_arp);
+
+#endif
