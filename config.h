@@ -9,7 +9,7 @@ typedef struct network_config {
 	char device[8];
 	char filter[1024];
 	int num_databases;
-	char databases[2][16];
+	int databases[2];
 } network_config_t;
 
 #endif
