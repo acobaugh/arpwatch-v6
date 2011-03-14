@@ -21,11 +21,15 @@
 #include <unistd.h> /* getopt */
 
 #include "utils.h"
+#include "db.h"
+#include "capture.h"
 
 extern int opt_debug;
 
 /* callback() gets called on every packet by pcap_loop() */
 void callback(u_char *args, const struct pcap_pkthdr *hdr, const u_char *packet) {
+	int netn = (int)args;
+
 	/* ethernet packet header */
 	struct ether_header *ether_hdr_p;
 	/* ethernet packet time */
@@ -49,7 +53,15 @@ void callback(u_char *args, const struct pcap_pkthdr *hdr, const u_char *packet)
 	/* ethernet layer */
 	ether_hdr_p = (struct ether_header *)packet;
 	//print_eth(*ether_hdr_p);
-	strcpy(smac, ether_ntoa((struct ether_addr *)(ether_hdr_p->ether_shost)));
+	sprintf(smac, "%02x:%02x:%02x:%02x:%02x:%02x",
+		ether_hdr_p->ether_shost[0],
+		ether_hdr_p->ether_shost[1],
+		ether_hdr_p->ether_shost[2],
+		ether_hdr_p->ether_shost[3],
+		ether_hdr_p->ether_shost[4],
+		ether_hdr_p->ether_shost[5]
+	);
+	//strcpy(smac, ether_ntoa((struct ether_addr *)(ether_hdr_p->ether_shost)));
 
 	/* get ether_type in host byte order */
 	ether_hdr_p->ether_type = ntohs(ether_hdr_p->ether_type);
@@ -82,29 +94,45 @@ void callback(u_char *args, const struct pcap_pkthdr *hdr, const u_char *packet)
 			switch (icmp6_hdr_p->icmp6_type)	{
 				case ND_ROUTER_SOLICIT:
 					ipv6_ntoa(ip, ip6_hdr_p->ip6_src);
-					iptoname(hostname, ip);
-					printf("ND_ROUTER_SOLICIT:\t %s\t%lld\t%s\t%s\n", smac, (long long int)time, ip, hostname);
+					db_store(smac, time, ip, netn, PACKET_TYPE_IPV6_RS);
+					if (opt_debug) {
+						iptoname(hostname, ip);
+						printf("ND_ROUTER_SOLICIT:\t %s\t%lld\t%s\t%s\n", smac, (long long int)time, ip, hostname);
+					}
 					break;
 				case ND_ROUTER_ADVERT:
 					ipv6_ntoa(ip, ip6_hdr_p->ip6_src);
-					iptoname(hostname, ip);
-					printf("ND_ROUTER_ADVERT:\t %s\t%lld\t%s\t%s\n", smac, (long long int)time, ip, hostname);
+					db_store(smac, time, ip, netn, PACKET_TYPE_IPV6_RA);
+					if (opt_debug) {
+						iptoname(hostname, ip);
+						printf("ND_ROUTER_ADVERT:\t %s\t%lld\t%s\t%s\n", smac, (long long int)time, ip, hostname);
+					}
 					break;
 				case ND_NEIGHBOR_SOLICIT:
 					ipv6_ntoa(ip, ip6_hdr_p->ip6_src);
-					iptoname(hostname, ip);
-					printf("ND_NEIGHBOR_SOLICIT:\t %s\t%lld\t%s\t%s\n", smac, (long long int)time, ip, hostname);
+					db_store(smac, time, ip, netn, PACKET_TYPE_IPV6_NS);
+					if (opt_debug) {
+						iptoname(hostname, ip);
+						printf("ND_NEIGHBOR_SOLICIT:\t %s\t%lld\t%s\t%s\n", smac, (long long int)time, ip, hostname);
+					}
 					break;
 				case ND_NEIGHBOR_ADVERT:
 					ipv6_ntoa(ip, ip6_hdr_p->ip6_src);
-					iptoname(hostname, ip);
-					printf("ND_NEIGHBOR_ADVERT:\t %s\t%lld\t%s\t%s\n", smac, (long long int)time, ip, hostname);
+					db_store(smac, time, ip, netn, PACKET_TYPE_IPV6_NA);
+					if (opt_debug) {
+						iptoname(hostname, ip);
+						printf("ND_NEIGHBOR_ADVERT:\t %s\t%lld\t%s\t%s\n", smac, (long long int)time, ip, hostname);
+					}
 					break;
 				case ND_REDIRECT:
-					printf("ND_REDIRECT\n");
+					if (opt_debug) {
+						printf("ND_REDIRECT\n");
+					}
 					break;
 				default:
-					printf("ignoring packet\n");
+					if (opt_debug) {
+						printf("ignoring packet\n");
+					}
 			}
 		} else {
 			return;
@@ -116,7 +144,9 @@ void callback(u_char *args, const struct pcap_pkthdr *hdr, const u_char *packet)
 	if (ether_hdr_p->ether_type == ETHERTYPE_ARP || ether_hdr_p->ether_type == ETHERTYPE_REVARP) {
 		/* check length */
 		if (hdr->caplen < sizeof(*ether_hdr_p) + sizeof(*ether_arp_p)) {
-			printf("Short ARP packet, ignoring\n");
+			if (opt_debug) {
+				printf("Short ARP packet, ignoring\n");
+			}
 			return;
 		}
 		
@@ -126,33 +156,44 @@ void callback(u_char *args, const struct pcap_pkthdr *hdr, const u_char *packet)
 		switch (ether_arp_p->arp_op) {
 			case ARPOP_REQUEST:
 				ipv4_ntoa(ip, ether_arp_p->arp_spa);
-				iptoname(hostname, ip);
-				printf("ARP request:\t %s\t%lld\t%s\t%s\n", smac, (long long int)time, ip, hostname);
+				db_store(smac, time, ip, netn, PACKET_TYPE_ARP_REQUEST);
+				if (opt_debug) {
+					iptoname(hostname, ip);
+					printf("%s(): ARP request:\t %s\t%lld\t%s\t%s\n", __FUNCTION__, smac, (long long int)time, ip, hostname);
+				}
 				break;
 			case ARPOP_REPLY:
 				ipv4_ntoa(ip, ether_arp_p->arp_spa);
-				iptoname(hostname, ip);
-				printf("ARP reply:  \t %s\t%lld\t%s\t%s\n", smac, (long long int)time, ip, hostname);
+				db_store(smac, time, ip, netn, PACKET_TYPE_ARP_REPLY);
+				if (opt_debug) {
+					iptoname(hostname, ip);
+					printf("%s(): ARP reply:  \t %s\t%lld\t%s\t%s\n", __FUNCTION__, smac, (long long int)time, ip, hostname);
+				}
 				break;
 			case ARPOP_RREPLY:
 				ipv4_ntoa(ip, ether_arp_p->arp_spa);
-				iptoname(hostname, ip);
-				printf("RARP reply:  \t %s\t%lld\t%s\t%s\n", smac, (long long int)time, ip, hostname);
+				db_store(smac, time, ip, netn, PACKET_TYPE_RARP_REPLY);
+				if (opt_debug) {
+					iptoname(hostname, ip);
+					printf("%s(): RARP reply:  \t %s\t%lld\t%s\t%s\n", __FUNCTION__, smac, (long long int)time, ip, hostname);
+				}
 				break;
 			default:
-				printf("ignoring packet\n");
+				if (opt_debug) {
+					printf("%s(): ignoring packet\n", __FUNCTION__);
+				}
 		}
 	} /* END ARP */
 }
 
-void capture(char *dev, char *filter_expr) {
+void capture(char *dev, char *filter_expr, int netn) {
 	char errbuf[PCAP_ERRBUF_SIZE] = "";
 	struct bpf_program fp;
 	bpf_u_int32 mask;
 	bpf_u_int32 net;
 
 	pcap_t *handle = NULL;
-	u_char *args = NULL;
+	//u_char *args = NULL;
 
 	if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1) {
 		fprintf(stderr, "Couldn't get netmask for device %s: %s\n", dev, errbuf);
@@ -184,7 +225,7 @@ void capture(char *dev, char *filter_expr) {
 		printf("pcap_setfilter(): success\n");
 	}
 
-	pcap_loop(handle, 0, callback, args);
+	pcap_loop(handle, 0, callback, (u_char *)netn);
 
 	pcap_freecode(&fp);
 	pcap_close(handle);
