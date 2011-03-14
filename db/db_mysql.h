@@ -1,21 +1,22 @@
 #ifndef DB_MYSQL_H
 #define DB_MYSQL_H 1
 
-/* mysql database type options */
-cfg_opt_t database_mysql_opts[] = {
-	CFG_STR("host", "localhost", CFGF_NONE),
-	CFG_STR("db", "arpwatch", CFGF_NONE),
-	CFG_STR("password", "arpwatch", CFGF_NONE),
-	CFG_STR_LIST("notify_methods", NULL, CFGF_NONE),
-	CFG_END()
-};
+#include <time.h>
+#include <confuse.h>
 
-typedef struct {
-	char *host;
-	char *db;
-	char *password;
-	char **notify_methods;
-} db_mysql_config;
+typedef struct db_mysql_config {
+	char host[128];
+	char db[64];
+	char user[64];
+	char password[128];
+	int num_notify_methods;
+	int notify_methods[2];
+} db_mysql_config_t;
 
+void db_store_mysql(char *, time_t, char *, int, int);
+
+void db_config_mysql(cfg_t *);
+
+void db_mysql_error(int err);
 
 #endif
