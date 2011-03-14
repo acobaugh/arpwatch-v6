@@ -53,10 +53,10 @@ int main(int argc, char *argv[]) {
 			printf("\tfilter = %s\n", filter_expr);
 			printf("\tDatabases:\n");
 			for (j = 0; j < networks[i].num_databases; j++) {
-				printf("\t\t%s\n", networks[i].databases[j]);
+				printf("\t\t%i\n", networks[i].databases[j]);
 			}
 		}
-		capture(networks[i].device, filter_expr);
+		capture(networks[i].device, filter_expr, i);
 	}
 
 	return 0;
