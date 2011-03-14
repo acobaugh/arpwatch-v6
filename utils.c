@@ -19,6 +19,8 @@
 
 #include "utils.h"
 
+extern int opt_debug;
+
 void usage() {
 	printf("Usage: arpwatch-v6 [-d] [-c config_file]\n\n");
 	die();
@@ -97,5 +99,26 @@ void iptoname(char *hostname, char *ip) {
 	ret = getnameinfo(ai->ai_addr, ai->ai_addrlen, hostname, NI_MAXHOST, NULL, 0, NI_NAMEREQD);
 
 	freeaddrinfo(ai);
+}
+
+int table_lookup(lookup_table_t *table, char *string) {
+	int i;
+
+	if (opt_debug) {
+		printf("%s(): string = %s\n", __FUNCTION__, string);
+	}
+
+	for (i = 0; table[i].code != -1; i++) {
+		if (opt_debug) {
+			printf("%s(): test string = %s\n", __FUNCTION__, table[i].string);
+		}
+		if (strcmp(table[i].string, string) == 0) {
+			if (opt_debug) {
+				printf("%s(): code = %i\n", __FUNCTION__, table[i].code);
+			}
+			return table[i].code;
+		}
+	}
+	return 0;
 }
 

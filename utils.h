@@ -10,6 +10,14 @@
 #include <netinet/ip.h>
 #include <net/if_arp.h>
 
+/* This is used in table_t to indicate the last element */
+#define TABLE_STOP -1
+
+typedef struct lookup_table {
+	char *string;
+	unsigned int code;
+} lookup_table_t;
+
 void usage();
 
 void die();
@@ -25,5 +33,7 @@ void ipv6_ntoa(char *, struct in6_addr);
 void print_ipv6hdr(struct ip6_hdr);
 
 void print_ipv4hdr(struct ether_arp);
+
+int table_lookup(lookup_table_t *, char *);
 
 #endif
